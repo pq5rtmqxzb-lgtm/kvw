@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JTF Rijnmond – Social Media Analyse Tool</title>
+<style>
+  :root {
+    --eu-blue: #003399;
+    --eu-yellow: #FFCC00;
+    --jtf-teal: #00A896;
+    --jtf-light: #E8F5F3;
+    --ok: #2d9e6b;
+    --warn: #e07b00;
+    --fail: #c0392b;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, var(--eu-blue) 0%, #1a3a8f 60%, var(--jtf-teal) 100%);
+    color: white; padding: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  }
+  .header-inner {
+    max-width: 1400px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
+  }
+  .logo-block { display: flex; align-items: center; gap: 16px; }
+  .eu-flag-svg { width: 48px; height: 32px; }
+  .logo-text h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -.5px; }
+  .logo-text p { font-size: .8rem; opacity: .85; }
+  .badge { background: var(--eu-yellow); color: #1a1a2e; padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700; }
+  .header-meta { font-size: .75rem; opacity: .7; text-align: right; }
+
+  /* Nav tabs */
+  nav { background: rgba(0,0,0,.15); border-top: 1px solid rgba(255,255,255,.15); }
+  .nav-inner { max-width: 1400px; margin: 0 auto; display: flex; gap: 0; padding: 0 24px; }
+  nav button {
+    background: none; border: none; color: rgba(255,255,255,.75);
+    padding: 12px 20px; font-size: .875rem; cursor: pointer; border-bottom: 3px solid transparent;
+    transition: all .2s;
+  }
+  nav button:hover { color: white; }
+  nav button.active { color: white; border-bottom-color: var(--eu-yellow); font-weight: 600; }
+
+  /* Main layout */
+  main { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* Tabs content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--card); border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border);
+  }
+  .card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: var(--eu-blue); display: flex; align-items: center; gap: 8px; }
+
+  /* KPI cards row */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); text-align: center; }
+  .kpi-card .kpi-val { font-size: 2rem; font-weight: 700; color: var(--eu-blue); }
+  .kpi-card .kpi-label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+  .kpi-card.green .kpi-val { color: var(--ok); }
+  .kpi-card.orange .kpi-val { color: var(--warn); }
+  .kpi-card.red .kpi-val { color: var(--fail); }
+
+  /* Grid 2 col */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media(max-width:900px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  /* Form elements */
+  label { display: block; font-size: .875rem; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+  select, textarea, input[type=text], input[type=url] {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: .9rem; color: var(--text);
+    background: white; transition: border .2s;
+    font-family: inherit;
+  }
+  select:focus, textarea:focus, input:focus { outline: none; border-color: var(--eu-blue); box-shadow: 0 0 0 3px rgba(0,51,153,.1); }
+  textarea { resize: vertical; min-height: 120px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media(max-width:700px) { .form-row { grid-template-columns: 1fr; } }
+  .form-group { margin-bottom: 16px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 8px; font-size: .9rem; font-weight: 600;
+    cursor: pointer; border: none; transition: all .2s;
+  }
+  .btn-primary { background: var(--eu-blue); color: white; }
+  .btn-primary:hover { background: #002277; }
+  .btn-success { background: var(--ok); color: white; }
+  .btn-success:hover { background: #1e7d50; }
+  .btn-danger { background: var(--fail); color: white; }
+  .btn-sm { padding: 6px 14px; font-size: .8rem; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--eu-blue); color: var(--eu-blue); }
+  .btn-outline:hover { background: var(--eu-blue); color: white; }
+
+  /* Platform tabs */
+  .platform-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .platform-tab {
+    padding: 8px 18px; border-radius: 20px; font-size: .85rem; font-weight: 500;
+    cursor: pointer; border: 1.5px solid var(--border); background: white; color: var(--muted);
+    transition: all .2s;
+  }
+  .platform-tab:hover { border-color: var(--eu-blue); color: var(--eu-blue); }
+  .platform-tab.active { background: var(--eu-blue); color: white; border-color: var(--eu-blue); }
+  .platform-tab.linkedin.active { background: #0077B5; border-color: #0077B5; }
+  .platform-tab.twitter.active { background: #1DA1F2; border-color: #1DA1F2; }
+  .platform-tab.facebook.active { background: #1877F2; border-color: #1877F2; }
+  .platform-tab.instagram.active { background: linear-gradient(45deg, #f09433,#e6683c,#dc2743,#cc2366,#bc1888); border: none; }
+
+  /* Compliance results */
+  .compliance-grid { display: grid; gap: 10px; }
+  .check-row {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+    border-radius: 8px; border: 1px solid var(--border); background: #fafafa;
+  }
+  .check-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .check-body { flex: 1; }
+  .check-title { font-weight: 600; font-size: .875rem; }
+  .check-desc { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .check-row.pass { background: #f0fdf4; border-color: #bbf7d0; }
+  .check-row.fail { background: #fff1f2; border-color: #fecdd3; }
+  .check-row.warn { background: #fffbeb; border-color: #fde68a; }
+
+  /* Score ring */
+  .score-section { text-align: center; padding: 20px 0; }
+  .score-circle {
+    width: 110px; height: 110px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; font-weight: 800; margin-bottom: 8px;
+    border: 6px solid var(--border);
+  }
+  .score-circle.score-high { border-color: var(--ok); color: var(--ok); background: #f0fdf4; }
+  .score-circle.score-mid { border-color: var(--warn); color: var(--warn); background: #fffbeb; }
+  .score-circle.score-low { border-color: var(--fail); color: var(--fail); background: #fff1f2; }
+  .score-label { font-size: .875rem; color: var(--muted); }
+  .score-verdict { font-size: 1rem; font-weight: 700; margin-top: 4px; }
+
+  /* Post preview */
+  .post-preview {
+    background: white; border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; font-size: .875rem; line-height: 1.6; color: var(--text);
+    white-space: pre-wrap; word-break: break-word; min-height: 80px;
+    max-height: 200px; overflow-y: auto;
+  }
+
+  /* History table */
+  .history-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .history-table th { background: var(--bg); padding: 10px 12px; text-align: left; font-weight: 600; color: var(--muted); border-bottom: 2px solid var(--border); }
+  .history-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .history-table tr:hover td { background: #f9fafb; }
+  .score-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: .78rem; font-weight: 700;
+  }
+  .score-pill.high { background: #dcfce7; color: var(--ok); }
+  .score-pill.mid { background: #fef9c3; color: #92400e; }
+  .score-pill.low { background: #fee2e2; color: var(--fail); }
+
+  /* Project card in overview */
+  .project-card {
+    background: var(--card); border-radius: 10px; padding: 16px;
+    border: 1px solid var(--border); cursor: pointer; transition: all .2s;
+  }
+  .project-card:hover { border-color: var(--eu-blue); box-shadow: 0 2px 8px rgba(0,51,153,.1); }
+  .project-card h3 { font-size: .9rem; font-weight: 600; color: var(--eu-blue); margin-bottom: 4px; }
+  .project-card .proj-meta { font-size: .78rem; color: var(--muted); }
+  .project-card .proj-badge { display: inline-block; background: var(--jtf-light); color: var(--jtf-teal); padding: 2px 8px; border-radius: 10px; font-size: .72rem; font-weight: 600; margin-top: 6px; }
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+  .search-bar { margin-bottom: 16px; }
+  .search-bar input { max-width: 400px; }
+
+  /* Tip box */
+  .tip-box {
+    background: var(--jtf-light); border-left: 4px solid var(--jtf-teal);
+    border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: .85rem;
+    color: #1a3a2e; margin-top: 12px;
+  }
+  .tip-box strong { color: var(--jtf-teal); }
+
+  /* Info sections */
+  .info-pill { display: inline-block; background: #eff6ff; color: var(--eu-blue); padding: 3px 10px; border-radius: 10px; font-size: .78rem; font-weight: 600; margin: 2px; }
+  .section-title { font-size: 1rem; font-weight: 700; color: var(--eu-blue); margin: 20px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .text-muted { color: var(--muted); font-size: .85rem; }
+  .mt-12 { margin-top: 12px; }
+  .mt-20 { margin-top: 20px; }
+  .mb-12 { margin-bottom: 12px; }
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .flex-wrap { flex-wrap: wrap; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+
+  /* Char counter */
+  .char-counter { font-size: .78rem; color: var(--muted); text-align: right; margin-top: 4px; }
+  .char-counter.over { color: var(--fail); font-weight: 600; }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: 8px; font-size: .875rem; margin-bottom: 16px; }
+  .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 24px; font-size: .78rem; color: var(--muted);
+    border-top: 1px solid var(--border); margin-top: 40px;
+  }
+  footer a { color: var(--eu-blue); text-decoration: none; }
+
+  /* Regulation accordion */
+  .acc-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .acc-header {
+    background: white; padding: 14px 16px; cursor: pointer; font-weight: 600;
+    font-size: .875rem; display: flex; justify-content: space-between; align-items: center;
+    color: var(--eu-blue);
+  }
+  .acc-header:hover { background: #f9fafb; }
+  .acc-body { padding: 12px 16px; background: #fafafa; font-size: .85rem; line-height: 1.6; display: none; }
+  .acc-body.open { display: block; }
+  .acc-arrow { transition: transform .2s; }
+  .acc-arrow.open { transform: rotate(180deg); }
+
+  /* Urgency bar */
+  .progress-bar-wrap { background: var(--border); border-radius: 8px; height: 8px; overflow: hidden; margin-top: 6px; }
+  .progress-bar-fill { height: 100%; border-radius: 8px; transition: width .4s; }
+  .fill-green { background: var(--ok); }
+  .fill-orange { background: var(--warn); }
+  .fill-red { background: var(--fail); }
+  .fill-blue { background: var(--eu-blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-block">
+      <!-- EU Flag SVG -->
+      <svg class="eu-flag-svg" viewBox="0 0 32 20" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="20" fill="#003399"/>
+        <g fill="#FFCC00" font-size="3.5" text-anchor="middle" dominant-baseline="middle">
+          <!-- 12 stars in circle -->
+          <circle cx="16" cy="3.5" r="1.1"/>
+          <circle cx="19.5" cy="5" r="1.1"/>
+          <circle cx="21" cy="8.5" r="1.1"/>
+          <circle cx="19.5" cy="12" r="1.1"/>
+          <circle cx="16" cy="13.5" r="1.1"/>
+          <circle cx="12.5" cy="12" r="1.1"/>
+          <circle cx="11" cy="8.5" r="1.1"/>
+          <circle cx="12.5" cy="5" r="1.1"/>
+          <circle cx="16" cy="5.5" r="0.7"/>
+          <circle cx="16" cy="11.5" r="0.7"/>
+          <circle cx="12.2" cy="8.5" r="0.7"/>
+          <circle cx="19.8" cy="8.5" r="0.7"/>
+        </g>
+      </svg>
+      <div class="logo-text">
+        <h1>JTF Rijnmond &mdash; Social Media Analyse</h1>
+        <p>Compliance checker voor gefinancierde projecten &bull; Verordening (EU) 2021/1060</p>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div class="badge">37 projecten geladen</div>
+      <div class="header-meta mt-12">Groot-Rijnmond &bull; &euro;60M+ EU subsidie</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-inner">
+      <button class="active" onclick="showTab('analyse')">&#128269; Analyse</button>
+      <button onclick="showTab('projecten')">&#128196; Projecten</button>
+      <button onclick="showTab('dashboard')">&#128200; Dashboard</button>
+      <button onclick="showTab('regels')">&#128214; Verordening</button>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+<!-- ==================== TAB: ANALYSE ==================== -->
+<div id="tab-analyse" class="tab-content active">
+
+  <div class="grid2" style="margin-bottom:20px">
+    <!-- Left: input form -->
+    <div>
+      <div class="card">
+        <h2>&#128221; Social media post invoeren</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sel-project">Project</label>
+            <select id="sel-project" onchange="onProjectChange()">
+              <option value="">— Selecteer een project —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="sel-platform">Platform</label>
+            <select id="sel-platform" onchange="onPlatformChange()">
+              <option value="linkedin">LinkedIn</option>
+              <option value="twitter">X / Twitter</option>
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Project info snippet -->
+        <div id="project-info" style="display:none; margin-bottom:16px;">
+          <div class="tip-box">
+            <strong id="pi-naam"></strong><br>
+            <span id="pi-penvoerder" class="text-muted"></span><br>
+            <span id="pi-beschrijving" class="text-muted" style="font-size:.8rem;"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="post-url">URL van de post <span style="color:var(--muted);font-weight:400">(optioneel)</span></label>
+          <input type="url" id="post-url" placeholder="https://www.linkedin.com/posts/...">
+        </div>
+
+        <div class="form-group">
+          <label for="post-text">Tekst van de post</label>
+          <textarea id="post-text" placeholder="Plak hier de volledige tekst van de social media post..." oninput="updateCharCount()"></textarea>
+          <div class="char-counter" id="char-counter">0 tekens</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bevat EU-vlag afbeelding?</label>
+            <select id="has-flag-img">
+              <option value="auto">Automatisch detecteren</option>
+              <option value="yes">Ja, EU-vlag is zichtbaar</option>
+              <option value="no">Nee, geen EU-vlag</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Postdatum</label>
+            <input type="text" id="post-date" placeholder="dd-mm-jjjj" value="">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
+          <button class="btn btn-primary" onclick="analysePost()">&#128269; Analyseer post</button>
+          <button class="btn btn-outline" onclick="clearForm()">&#10006; Wissen</button>
+          <button class="btn btn-outline" onclick="loadExample()">&#128161; Voorbeeld laden</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: results -->
+    <div>
+      <div class="card" id="result-card">
+        <h2>&#9989; Resultaat</h2>
+        <div id="result-placeholder" class="text-muted" style="padding:40px 0; text-align:center;">
+          <div style="font-size:3rem; margin-bottom:12px;">&#128269;</div>
+          Vul een post in en klik op <strong>Analyseer post</strong> om de compliancecheck te starten.
+        </div>
+        <div id="result-content" style="display:none;">
+
+          <div class="score-section">
+            <div class="score-circle" id="score-circle">—</div>
+            <div class="score-label">Compliance score</div>
+            <div class="score-verdict" id="score-verdict"></div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="kpi-row" style="margin-bottom:16px;">
+            <div class="kpi-card" id="kpi-pass">
+              <div class="kpi-val green" id="kpi-pass-val">0</div>
+              <div class="kpi-label">✅ Geslaagd</div>
+            </div>
+            <div class="kpi-card" id="kpi-warn">
+              <div class="kpi-val orange" id="kpi-warn-val">0</div>
+              <div class="kpi-label">⚠️ Aandacht</div>
+            </div>
+            <div class="kpi-card" id="kpi-fail">
+              <div class="kpi-val red" id="kpi-fail-val">0</div>
+              <div class="kpi-label">❌ Niet voldaan</div>
+            </div>
+          </div>
+
+          <div class="compliance-grid" id="checks-container"></div>
+
+          <hr class="divider">
+          <button class="btn btn-success btn-sm" onclick="saveToHistory()" style="margin-top:4px;">&#128190; Opslaan in geschiedenis</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggestions -->
+  <div class="card" id="suggestions-card" style="display:none;">
+    <h2>&#128161; Verbeterpunten &amp; aanbevolen tekst</h2>
+    <div id="suggestions-content"></div>
+  </div>
+
+</div>
+
+<!-- ==================== TAB: PROJECTEN ==================== -->
+<div id="tab-projecten" class="tab-content">
+  <div class="card">
+    <h2>&#128196; Alle JTF Rijnmond projecten (37)</h2>
+    <div class="search-bar">
+      <input type="text" id="proj-search" placeholder="&#128269; Zoek op projectnaam, penvoerder of stad..." oninput="filterProjects()" style="max-width:500px;">
+    </div>
+    <div class="projects-grid" id="projects-grid"></div>
+  </div>
+</div>
+
+<!-- ==================== TAB: DASHBOARD ==================== -->
+<div id="tab-dashboard" class="tab-content">
+  <!-- Summary KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-val" id="dash-total">0</div>
+      <div class="kpi-label">Geanalyseerde posts</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-val green" id="dash-compliant">0</div>
+      <div class="kpi-label">Volledig compliant</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-val orange" id="dash-partial">0</div>
+      <div class="kpi-label">Gedeeltelijk compliant</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-val red" id="dash-noncompliant">0</div>
+      <div class="kpi-label">Niet compliant</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="dash-avgscore">—</div>
+      <div class="kpi-label">Gem. score</div>
+    </div>
+  </div>
+
+  <!-- Compliance per check -->
+  <div class="grid2">
+    <div class="card">
+      <h2>&#128202; Compliance per vereiste</h2>
+      <div id="dash-per-check">
+        <div class="text-muted" style="padding:20px 0; text-align:center;">Nog geen posts geanalyseerd.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>&#128290; Posts per platform</h2>
+      <div id="dash-per-platform">
+        <div class="text-muted" style="padding:20px 0; text-align:center;">Nog geen posts geanalyseerd.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History table -->
+  <div class="card mt-20">
+    <div class="flex items-center justify-between mb-12">
+      <h2 style="margin-bottom:0;">&#128203; Analysegeskiedenis</h2>
+      <button class="btn btn-outline btn-sm" onclick="clearHistory()">&#128465; Wissen</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="history-table" id="history-table">
+        <thead>
+          <tr>
+            <th>Datum analyse</th>
+            <th>Project</th>
+            <th>Platform</th>
+            <th>Score</th>
+            <th>Verdict</th>
+            <th>Actie</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody">
+          <tr><td colspan="6" class="text-muted" style="text-align:center;padding:20px;">Nog geen analyses opgeslagen.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB: REGELS ==================== -->
+<div id="tab-regels" class="tab-content">
+  <div class="grid2">
+    <div>
+      <div class="card">
+        <h2>&#128214; Verordening (EU) 2021/1060 – Communicatievereisten</h2>
+        <p class="text-muted" style="margin-bottom:16px;">Artikel 47 en Bijlage IX bevatten de verplichte communicatie- en zichtbaarheidsvereisten voor begunstigden van EU-fondsen, waaronder het JTF.</p>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            🇪🇺 Artikel 47 – Communicatieverplichtingen
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            Begunstigden en autoriteiten zijn verplicht het publiek te informeren over de EU-bijdrage. Voor social media betekent dit: elke post over een gefinancierd project moet de EU-financiering zichtbaar erkennen. Het verzuim kan leiden tot financiële correcties van maximaal <strong>3% van de EU-bijdrage</strong>.
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            🏳️ Bijlage IX – EU-embleem (vlag)
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            Het EU-embleem (vlag met 12 sterren) moet worden weergegeven op alle communicatiematerialen, inclusief social media. Het embleem:<br>
+            • Moet minstens even groot zijn als andere logo's<br>
+            • Mag niet worden aangepast of gecombineerd met andere beelden<br>
+            • Moet herkenbaar blauw zijn met gele sterren<br>
+            • Op X/Twitter is het vlag-emoji 🇪🇺 een aanvaardbaar alternatief voor beperkte tekens.
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            📝 Bijlage IX – Cofinancieringsverklaring
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            Elke post moet een duidelijke verklaring bevatten die erkent dat het project door de EU wordt medegefinancierd. Aanbevolen formuleringen:<br>
+            • <em>"Medegefinancierd door de Europese Unie"</em><br>
+            • <em>"Co-funded by the European Union"</em><br>
+            • <em>"Met steun van de Europese Unie / het Just Transition Fund"</em><br>
+            De verklaring moet goed zichtbaar zijn en niet in kleine lettertjes worden verborgen.
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            #️⃣ JTF Handboek – Verplichte hashtags
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            Het JTF communicatiehandboek vereist:<br>
+            • Hashtag <strong>#EUinmyregion</strong> of <strong>#EUinmijnregio</strong><br>
+            • Optioneel: <strong>#JTF</strong>, <strong>#JustTransitionFund</strong>, <strong>#JTFRijnmond</strong><br>
+            • Tag de beheersautoriteit waar van toepassing<br>
+            • Tag @EU_Regional of @KansenVoorWest_nl indien relevant
+          </div>
+        </div>
+
+        <div class="acc-item">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            ⚠️ Sancties bij niet-naleving
+            <span class="acc-arrow">▼</span>
+          </div>
+          <div class="acc-body">
+            Bij structurele niet-naleving van de communicatievereisten kunnen de volgende sancties worden opgelegd:<br>
+            • Financiële correctie: tot <strong>3% van de totale EU-bijdrage</strong> van de operatie<br>
+            • Schriftelijke waarschuwing en herstelopdracht<br>
+            • In ernstige gevallen: opschorting van betalingen<br>
+            Bron: Artikel 47 lid 2 Verordening (EU) 2021/1060.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>✅ Checklist per platform</h2>
+        <div class="platform-tabs">
+          <div class="platform-tab active" onclick="showPlatformChecks('linkedin', this)">LinkedIn</div>
+          <div class="platform-tab" onclick="showPlatformChecks('twitter', this)">X / Twitter</div>
+          <div class="platform-tab" onclick="showPlatformChecks('facebook', this)">Facebook</div>
+          <div class="platform-tab" onclick="showPlatformChecks('instagram', this)">Instagram</div>
+        </div>
+        <div id="platform-checklist"></div>
+      </div>
+
+      <div class="card mt-20">
+        <h2>📋 Voorbeeldpost – volledig compliant</h2>
+        <div class="platform-tabs">
+          <div class="platform-tab active" onclick="showExample('linkedin', this)">LinkedIn</div>
+          <div class="platform-tab" onclick="showExample('twitter', this)">X / Twitter</div>
+          <div class="platform-tab" onclick="showExample('facebook', this)">Facebook</div>
+          <div class="platform-tab" onclick="showExample('instagram', this)">Instagram</div>
+        </div>
+        <div class="post-preview" id="example-post"></div>
+        <div class="tip-box mt-12">
+          <strong>Tip:</strong> Kopieer dit voorbeeld en pas het aan voor uw project. Gebruik de <a href="#" onclick="showTab('analyse');return false;" style="color:var(--jtf-teal);font-weight:600;">Analyse-tab</a> om uw eigen post te controleren.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  JTF Rijnmond Social Media Analyse Tool &bull;
+  Gebaseerd op <a href="https://eur-lex.europa.eu/eli/reg/2021/1060/oj" target="_blank">Verordening (EU) 2021/1060</a> &bull;
+  Data: <a href="https://jtf-rijnmond.kansenvoorwest.nl" target="_blank">jtf-rijnmond.kansenvoorwest.nl</a> &bull;
+  37 projecten &bull; &euro;60M+ EU-bijdrage Groot-Rijnmond
+</footer>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+const PROJECTS = [{"nr":"JTFW-00003","naam":"HydroTwin","penvoerder":"HydroTwin B.V.","stad":"Rotterdam","begunstigden":"HydroTwin B.V.","eu_bijdrage":700000,"kosten":1411103,"startdatum":"2023-01-23","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project HydroTwin ontvangt € 700.000 subsidie uit het JTF. Het project ontwikkelt een digitaal platform voor de certificering en handel van waterstof en waterstofdragers. Europa heeft import van nieuwe, groene energiedragers nodig en zet zwaar in op groene waterstof. De Haven van Rotterdam heeft een uitstekende positie om hierin een leidende commodity hub te worden. Naast investeringen in volumes en infrastructuur is hiervoor marktinfrastructuur nodig: standaardcontracten, op termijn een spo"},{"nr":"JTFW-00004","naam":"Betaalbare groene waterstofproductie","penvoerder":"Battolyser B.V.","stad":"Schiedam","begunstigden":"Battolyser B.V.","eu_bijdrage":2000000,"kosten":8043197,"startdatum":"2023-01-23","einddatum":"2026-01-23","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Schiedam","beschrijving":"Battolyser Systems ontvangt € 2.000.000 subsidie uit het JTF voor het project Betaalbare groene waterstof. Battolyer ontwikkelt een batterij die, wanneer deze opgeladen is met stroom, waterstof kan produceren. De overtollige energie wordt op die manier gebruikt voor de winning van waterstof met een elektrolyser, wat kan worden ingezet in andere toepassingen, als vervoer en productieprocessen. De betere efficiëntie van de elektrolyser en de flexibiliteit van de batterij leidt ertoe dat een Battol"},{"nr":"JTFW-00006","naam":"RotaScrub-CarbonCapture (RSCC)","penvoerder":"SDS Separation Technology B.V.","stad":"Zwijndrecht","begunstigden":"SDS Separation Technology B.V.","eu_bijdrage":389136,"kosten":852300,"startdatum":"2023-01-23","einddatum":"2025-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Rotterdam Botlek","beschrijving":"SDS Separation Technology ontvangt € 389.135,87 subsidie uit het JTF voor het project RotaScrub-CarbonCapture (RSCC). SDS Separation Technology ontwikkelt een technologie voor het efficiënt afvangen van CO2. Het bedrijf is gespecialiseerd in het scheiden van gassen en vloeistoffen op basis van een eigen ontwikkelde oplossing, waarbij door middel van centrifuge en filters gassen en vloeistoffen gescheiden worden. Met het JTF wordt de oplossing doorontwikkeld voor een zeer efficiënte vorm van CO2-"},{"nr":"JTFW-00007","naam":"CSO™ - The Future is Sweet","penvoerder":"Vertoro West B.V.","stad":"Botlek Rotterdam","begunstigden":"Vertoro West B.V.","eu_bijdrage":2000000,"kosten":4000004,"startdatum":"2023-01-23","einddatum":"2025-07-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Plant One R'dam","beschrijving":"Het project CSO – the future is sweet ontvangt € 2.000.000 subsidie uit het JTF. Het project is gericht op het versnellen van de productie van biobased olie. Het bedrijf heeft een eigen technologie ontwikkeld die biomassa omzet in ruwe lignineolie en cellulose, die kan worden gerecycled en opgewerkt tot een glucoserijke siroop, Crude Sugar Oil (CSO). Deze glucosestroop kan vervolgens via fermentatie worden verfijnd tot geavanceerde ethanol, die kan dienen als grondstof voor benzine of duurzame v"},{"nr":"JTFW-00009","naam":"Was en coatings uit afvalplastics: Sluit de keten","penvoerder":"Beryl Circular B.V.","stad":"Amersfoort","begunstigden":"Beryl Circular B.V.","eu_bijdrage":1530845,"kosten":3401878,"startdatum":"2023-01-31","einddatum":"2026-03-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project van Was en Coatings uit afvalplastics: sluit de keten van  Beryl ontvangt € 1.530.845 subsidie uit het JTF. Het project verwerkt met een innovatieve pyrolyse techniek verschillende afvalplastics tot industriële wax. Deze wax kan worden ingezet in coatings en smeer- en beschermingsmiddelen voor machines. Het project bouwt een pilotplant voor een snelle doorontwikkeling en opschaling om ruim 250 ton afvalplastics te verwerken in een jaar. De pilotplant wordt gebouwd op de campus van Pl"},{"nr":"JTFW-00013","naam":"Gradyent Industrial","penvoerder":"Gradyent B.V.","stad":"Rotterdam","begunstigden":"Gradyent B.V.","eu_bijdrage":2000000,"kosten":4615272,"startdatum":"2023-01-23","einddatum":"2025-09-30","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Pernis/Rotterdam","beschrijving":"Gradyent ontwikkelt een digital twin van stoomsystemen voor toepassing in de Rotterdamse haven. Stoomsystemen in de Rotterdamse haven worden gebruikt voor het verwarmen van industriële processen en stoten ruim 10 mton CO2 uit. Het verlagen van de CO2-uitstoot van stoomsystemen is dan ook een belangrijk element in het klimaatbestendig maken van de haven. Door de ontwikkeling van digital twins worden stoomnetwerken efficiënter gemaakt waardoor CO2 wordt bespaard. Daarnaast helpen de digital twins "},{"nr":"JTFW-00016","naam":"Circulaire carbon black: Nieuwe grondstoffen uit oude autobanden","penvoerder":"Plant One Rotterdam B.V.","stad":"Botlek Rotterdam","begunstigden":"Plant One Rotterdam B.V. | GTG Holding B.V. | Pyro One B.V.","eu_bijdrage":1579174,"kosten":3158348,"startdatum":"2023-01-23","einddatum":"2025-04-30","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"PLant One (was oorspronkelijk Pyro One BV en GTG Holding B.V.) ontvangt €1.579.173,98 (was oorspronkelijk € 2.000.000) subsidie uit het JTF voor het project Circulaire carbon black: Nieuwe grondstoffen uit oude autobanden. De partijen hebben een technologie ontwikkeld om met pyrolyse oude autobanden te recyclen en de stof carbon black en pyrolyseolie terug te winnen om als grondstof opnieuw in het proces te brengen. In het project wordt de technologie opgeschaald om tot marktintroductie over te "},{"nr":"JTFW-00018","naam":"ESBA HIC","penvoerder":"Holland Drivelines Maassluis B.V.","stad":"Maassluis","begunstigden":"Holland Drivelines Maassluis B.V. | HDM Power Systems","eu_bijdrage":961586,"kosten":1923172,"startdatum":"2023-04-01","einddatum":"2026-03-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Pernis Rotterdam","beschrijving":"Het project Energy Storage By Air (hierna ESBA) van HDM Maasluis en Greenport Pernis ontvangt € 961.585,80 subsidie uit het JTF voor het ontwikkelen van een luchtdrukbatterij. De energietransitie vraagt om investeringen in de energie-infrastructuur, waaronder in opslag. Hier draagt het beoogde project aan bij. De ESBA is een milieuvriendelijk alternatief voor chemische solid state accu’s. Met de ESBA kan duurzaam opgewerkte energie worden opgeslagen en ontladen, zowel voor eigen gebruik als voor"},{"nr":"JTFW-00020","naam":"Opschaling verwerking vezelversterkte thermoharders","penvoerder":"Circular Recycling Company B.V.","stad":"Willemstad","begunstigden":"Circular Recycling Company B.V. | AM&P B.V. | KayCae B.V. | Kamp Molenweg B.V.","eu_bijdrage":1370667,"kosten":3287987,"startdatum":"2023-05-01","einddatum":"2026-02-28","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Botlek Rotterdam","beschrijving":"Het project Opschaling verwerking vezelversterkte thermoharders ontvangt € 1.370.667,25 uit het JTF. Doel van dit project is de opschaling van een pilotinstallatie voor de fractioneringstechnologie met een verwerkingscapaciteit van ca 3.000 ton op jaarbasis naar een industriële installatie met capaciteit van 10.000 ton op jaarbasis. De fractioneringstechnologie verkleint de composiet delen in meerdere stappen waarbij vezelsterkte behouden blijft, tot een grondstof die als kan worden toegepast. H"},{"nr":"JTFW-00021","naam":"MAMMOTH","penvoerder":"Concr3de B.V.","stad":"Rotterdam","begunstigden":"Concr3de B.V.","eu_bijdrage":748896,"kosten":1497793,"startdatum":"2023-01-23","einddatum":"2025-01-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Concr3DE ontvangt € 748.896,50 subsidie uit het JTF voor het project Mammoth. Concr3de is een echt Rotterdamse circulaire startup, gericht op hergebruiken van beton en baksteenmateriaal uit gesloopte gebouwen. Het bedrijf ontwikkelt betonprinters, genaamd de Mammoth. Deze gebruikt afvalstromen uit de sloop van gebouwen die worden omgezet in nieuwe bouwmaterialen. Ten opzichte van de traditionele processen wordt er 80% minder CO₂ gebruikt. Met de subsidie wordt de Mammoth ontwikkeld om het produc"},{"nr":"JTFW-00022","naam":"Versterken ecosysteem benutten investeringen in Vitale infra HIC als banenmotor","penvoerder":"Gemeente Rotterdam","stad":"Rotterdam","begunstigden":"Gemeente Rotterdam | Stichting arbeidsmatchplatform energietransitie","eu_bijdrage":2197675,"kosten":4395350,"startdatum":"2023-01-23","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project ontvangt een bijdrage van € 2.197.675,25 uit het JTF. Het benutten van de investeringen in de Vitale infra HIC als banenmotor voor Rotterdammers/Rijnmonders en daarmee het versterken van het ecosysteem van relevante actoren is van groot belang. Veel partijen in het Havenindustrieel complex zijn zich bewust van het feit dat de aanpassing van de vitale infrastructuur voor energie cruciaal is om de energietransitie in het HIC überhaupt goed te kunnen doorzetten. Daarom geeft de gemeente"},{"nr":"JTFW-00023","naam":"De-polymerisatie niet-mechanisch recyclebare afvalplastics naar virgin plastics","penvoerder":"Xycle Europoort B.V.","stad":"Willemstad","begunstigden":"Xycle Europoort B.V.","eu_bijdrage":2000000,"kosten":4738774,"startdatum":"2023-02-01","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Europoort Rotterdam","beschrijving":"Het project \"De-polymerisatie niet-mechanisch recyclebare afvalplastics naar virgin plastics\" ontvangt € 2.000.000 subsidie uit het JTF voor de realisatie van een verwerkingsproces voor vervuilende plastics. Doel van dit project is de realisatie van een eerste pilot plant met een voor Nederland nieuwe de-polymerisatie techniek en een verwerkingscapaciteit van minimaal 65 ton per dag en de daaropvolgende operatie. De niet mechanisch recyclebare plastics worden nu in Nederland verbrand en komen el"},{"nr":"JTFW-00024","naam":"FC-Factory","penvoerder":"zepp.solutions B.V.","stad":"Delft","begunstigden":"zepp.solutions B.V.","eu_bijdrage":1985000,"kosten":3974998,"startdatum":"2023-06-01","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Groot-Rijmond HIC Cluster","beschrijving":"Zepp.Solutions ontvangt € 1.985.000 uit het JTF voor het project FC Factory. Zepp.Solutions is een startup, gericht op waterstof en ontwikkelt fuel cell systemen voor de toepassing van waterstof in het vervoer. Met de subsidie wordt een productiefaciliteit opgezet voor de ontwikkeling en productie van de fuel cell systemen. Daardoor wordt enerzijds de bestaande prototypen doorontwikkeld voor opschaling en anderzijds de toepassing van waterstof verder ontwikkeld.  Dit sluit aan op de doelstelling"},{"nr":"JTFW-00025","naam":"Advantage.li","penvoerder":"Maxwell and Spark B.V.","stad":"Rotterdam","begunstigden":"Maxwell and Spark B.V.","eu_bijdrage":1257526,"kosten":2515052,"startdatum":"2023-02-01","einddatum":"2026-01-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project Advantage.li ontvangt € 1.257.526,25 subsidie uit het JTF. Doelstelling van het project is om de technische oplossing te valideren en uit te rollen in de regio. Het betreft een hoog efficiënt oplaadsysteem voor lithium batterijen om achteraf in te bouwen in dieselaangedreven reefer trailers (koelopleggers). Omdat dit product wordt ontworpen als “plug&play” kan het gebruikt worden voor de verduurzaming van zowel bestaande als nieuwe trailers. Voor de eerste fase light de focus op het "},{"nr":"JTFW-00027","naam":"Iedereen kan meedoen in de energietransitie","penvoerder":"Stroomopwaarts MVS","stad":"Schiedam","begunstigden":"Stroomopwaarts MVS","eu_bijdrage":266928,"kosten":538922,"startdatum":"2023-07-01","einddatum":"2025-09-30","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Vlaardingen","beschrijving":"Stroomopwaarts voert namens de gemeenten Maasluis, Vlaardingen en Schiedam het gedeelte Werk en Inkomen uit en heeft de sociale werkplaatsen en het werkleerbedrijf in die gemeenten. Met dit project wil Stroomopwaarts onbenut arbeidspotentieel activeren, door inwoners met een afstand tot de arbeidsmarkt een kort werkleertraject met baangarantie te bieden. Dit doet Stroomopwaarts samen met de Beroepentuin. Concrete doelstelling is om ruim 100 deelnemers samen met het lokale bedrijfsleven te schole"},{"nr":"JTFW-00028","naam":"Decom Cockpit","penvoerder":"Circular Recycling Company B.V.","stad":"Willemstad","begunstigden":"Circular Recycling Company B.V. | Jansen Recycling Group B.V. | ECHT regie in transitie B.V.","eu_bijdrage":1345681,"kosten":2937527,"startdatum":"2023-03-01","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project Decom Cockpit ontvangt € 1.345.680,84 uit het JTF. Het project is gericht op de toenemende hoeveelheid afval-en reststromen van windturbines. De kennis van de componenten en materiaalsamenstelling is vaak afwezig en zeer slecht gedocumenteerd. Een windturbine is een complex geheel met veel materialen en grondstoffen die niet goed worden gerecycled. Stort of verbranding was het lot van vele turbines, maar dat zijn geen duurzame oplossingen. Door de krachten binnen de supplychain te bu"},{"nr":"JTFW-00029","naam":"Waterstofbinnenschip FPS Rijn","penvoerder":"Future Proof Shipping B.V.","stad":"Almere","begunstigden":"Future Proof Shipping B.V.","eu_bijdrage":2000000,"kosten":4720740,"startdatum":"2023-01-23","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project Waterstofbinnenvaartschip van FPS ontvangt € 2.000.000 subsidie uit het JTF. Doel van dit project is het ombouwen van een bestaand containerbinnenvaartschip met dieselaandrijving naar een schip met 100% elektrische aandrijving met waterstof brandstofceltechnologie, waarbij alle verbrandingsmotoren zijn verwijderd. Daardoor wordt het een zero-emissie schip met een CO2 besparing van 2.079 ton per jaar. Het schip gaat varen op de route Rotterdam-Duisburg."},{"nr":"JTFW-00031","naam":"Port of Energy","penvoerder":"Havenbedrijf Rotterdam N.V.","stad":"Rotterdam","begunstigden":"Havenbedrijf Rotterdam N.V. | Stichting STC-Group | Stichting Hogeschool Rotterdam | Techniek College Rotterdam (samenwerkingscollege tussen ROC Albeda en ROC Zadkine) | Jinc | Deltalinqs | Stichting IT Campus Rotterdam | EIC Mainport Rotterdam | Maritiem Museum Rotterdam | Stichting Belastingmuseum prof.dr. Van der Poel | TNO | Gemeente Rotterdam","eu_bijdrage":5751365,"kosten":11552231,"startdatum":"2023-01-23","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het realiseren van de energietransitie gaat gepaard met een groot aantal uitdagingen. Ook in het Haven Industrieel Complex zijn de uitdagingen enorm. Er is een groot tekort aan arbeidskrachten, tegelijkertijd verlangt de energietransitie vernieuwd vakmanschap. Dat vraagt om een structurele aanpak waarin bedrijven, publieke instellingen, (beroeps)onderwijs, onderzoekers en overheid intensief samenwerken aan het onderhouden en versterken van het regionale innovatie ecosysteem. Daarom is de Human C"},{"nr":"JTFW-00034","naam":"SPEX circulaire plastics","penvoerder":"SPEX Technology B.V.","stad":"Rotterdam","begunstigden":"SPEX Technology B.V.","eu_bijdrage":1107202,"kosten":2442647,"startdatum":"2023-01-31","einddatum":"2025-09-30","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project SPEX ontvangt € 1.107.202 subsidie uit het JTF. SPEX Technologies, dochter van Obbotec, ontwikkelt een pilotinstallatie en proces om plastics te hergebruiken in de keten. Dit past goed in het programma en doordat afvalplastics worden gerecycled op een zeer hoogwaardige manier waardoor een veel hoger percentage plastics kan worden hergebruikt. Daardoor is het project zeer interessant voor de verduurzaming van de bestaande petrochemie en het gebruik van fossiele grondstoffen voor de pl"},{"nr":"JTFW-00035","naam":"Dynamisch Thermische Oxidatie van reststromen","penvoerder":"Xirqulate","stad":"Willemstad","begunstigden":"Xirqulate | AM&P B.V. | Kamp Molenweg B.V. | KayCae B.V. | Kamp Molenweg B.V.","eu_bijdrage":2000000,"kosten":15590033,"startdatum":"2023-05-01","einddatum":"2027-02-28","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het project ontvangt € 2.000.000 uit het JTF. Doel van dit project is de investering in een nieuwe industriële installatie voor Dynamisch Thermisch Oxidatie van reststromen met een verwerkingscapaciteit van 160.000 ton. Binnen de AM&P groep is het gepatenteerde proces ontwikkeld waarmee verontreinigde reststromen zoals slib, maar ook de fractie die overblijft na vergisting van huishoudelijk afval kunnen worden verwerkt tot een secundaire grondstof voor de keramische industrie met een Dynamisch T"},{"nr":"JTFW-00038","naam":"Elektrische binnenvaart in Rijnmond (flowbatterijen)","penvoerder":"E-PortLiner Holding B.V.","stad":"Huissen","begunstigden":"E-PortLiner Holding B.V.","eu_bijdrage":0,"kosten":0,"startdatum":"2023-05-01","einddatum":"","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Kinderdijk en Hartelkanaal","beschrijving":"Het project Elektrische binnenvaart in Rijnmond is niet van start gegaan en op 0 vastgesteld."},{"nr":"JTFW-00042","naam":"Campus voor Circulaire Chemie en Klimaat","penvoerder":"Plant One Rotterdam B.V.","stad":"Botlek Rotterdam","begunstigden":"Plant One Rotterdam B.V.","eu_bijdrage":1001159,"kosten":2286647,"startdatum":"2023-06-21","einddatum":"2025-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Botlek Rotterdam","beschrijving":"Het project Campus voor Circulaire Chemie en Klimaat ontvangt € 1.006.659 subsidie uit het JTF. Met het project wil PlantOne de bestaande campus uitbreiden waardoor er meer plots ontstaan waar bedrijven hun innovaties, pilots en demoplants kunnen testen. De campus huisvest startups en scale-ups die zich inzetten voor de energie- grondstoffen- en klimaattransitie. Op de campus ontstaan nieuwe bedrijven die bijdragen aan de doelstellingen van het JTF en aan het versnellen van de energietransitie v"},{"nr":"JTFW-00045","naam":"Klinkers van Baggerspecie","penvoerder":"NETICS B.V.","stad":"Alblasserdam","begunstigden":"NETICS B.V. | Havenbedrijf Rotterdam N.V.","eu_bijdrage":193777,"kosten":387553,"startdatum":"2023-10-02","einddatum":"2026-12-01","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Yangtzehaven Rotterdam","beschrijving":"Wereldwijd neemt de vraag naar (primaire) grondstoffen toe. Voor een duurzame toekomst is het noodzakelijk om zuiniger en slimmer om te gaan met het gebruik van grondstoffen. Om deze doelstelling te halen is het van belang dat er tot 2050 geïnvesteerd wordt in nieuwe technologie die het mogelijk maakt om circulair met grondstoffen om te gaan en daarnaast de uitstoot van broeikasgassen zoals CO2 tot een minimum te beperken. Binnen de civiele techniek is het gebruik van beton substantieel. Echter "},{"nr":"JTFW-00047","naam":"AluAirZero","penvoerder":"ZemQuest B.V.","stad":"Leiden","begunstigden":"ZemQuest B.V.","eu_bijdrage":400000,"kosten":810499,"startdatum":"2023-10-03","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Den Haag","beschrijving":"Het project AluAirZero ontvangt € 400.000 subsidie uit het JTF. Het bedrijf ZemQuest doet onderzoek naar een circulaire en uitstootvrije aluminium-lucht batterij. Deze batterij kan worden toegepast in verschillende vormen van vervoer. De hoge energiedichtheid van aluminium maakt dat de technologie van ZemQuest kan helpen in het versnellen van de elektrificatie van vervoer op de weg en het water. Tijdens het project wil het ZemQuest twee belangrijke mijlpalen bereiken: het ontwikkelen van een pro"},{"nr":"JTFW-00051","naam":"Modulaire VAPRO opleiding","penvoerder":"VAPRO B.V.","stad":"'s-Gravenhage","begunstigden":"VAPRO B.V.","eu_bijdrage":182990,"kosten":182990,"startdatum":"2023-11-01","einddatum":"2027-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"'s-Gravenhage","beschrijving":"Procesoperators binnen de industriële bedrijven zijn essentiële functionarissen in de transitie naar een duurzame industrie. Nieuwe technologieën ter verduurzaming van de processen vereisen nieuwe skills. Dit heeft direct invloed op de werkzaamheden van deze operators: op de wijze van bediening en bewaking van het proces (bijvoorbeeld vernieuwde, duurzame apparatuur) en op de mindset die nodig is om tot steeds verdere verduurzaming te komen (bijvoorbeeld optimalisatie van processen, gericht op c"},{"nr":"JTFW-00056","naam":"Bedrijfsschool: Plant One Practical","penvoerder":"Plant One Rotterdam B.V.","stad":"Botlek Rotterdam","begunstigden":"Plant One Rotterdam B.V. | STC-Group/Scheepvaart en Transport College","eu_bijdrage":910218,"kosten":1937726,"startdatum":"2023-10-31","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Tijdens dit project wordt een moderne modulaire bedrijfsopleiding opgezet door Plant One Rotterdam en de STC Group voor het jaarlijks opleiden van minimaal 20 operators in de circulaire chemie en circulaire procesindustrie. De bedrijfsopleiding Practical One wordt gerealiseerd op zowel het terrein van Plant One Rotterdam in de Botlek als de STC Group locatie Brielle. Het doel is om studenten op te leiden en voor te bereiden op de transitie die de chemische industrie doormaakt en waarvoor veel ar"},{"nr":"JTFW-00060","naam":"Energietransitie omscholing zij-instromers","penvoerder":"Vakwijs B.V.","stad":"Schiedam","begunstigden":"Vakwijs B.V.","eu_bijdrage":200000,"kosten":200000,"startdatum":"2023-12-01","einddatum":"2027-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Schiedam","beschrijving":"Voor veel mensen die de stap willen maken naar een baan in de techniek, en dat is een groeiende groep mensen, is de sector een ondoorzichtig geheel.  Natuurlijk, er zin heel veel vacatures, voor heel veel verschillende technische disciplines, maar zelden wordt er gevraagd om zij-instromers zonder ervaring.  De sector (Haven en Industrie, Contractors en Installatiebedrijven) zijn van oudsher gewend om te zoeken naar mensen met ervaring, technische kennis en affiniteit, en wanneer je daar niet ove"},{"nr":"JTFW-00064","naam":"Toekomstbestendig - Rijnmond","penvoerder":"Inholland Academy","stad":"'s-Gravenhage","begunstigden":"Inholland Academy","eu_bijdrage":100000,"kosten":200000,"startdatum":"2023-12-15","einddatum":"2027-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Regio Rijnmond","beschrijving":"Het doel van dit project is enerzijds het terugdringen van het vacatureoverschot en anderzijds het bemensen van veranderende industriële banen. De reden hiervoor is de geplande uitfasering van fossiele brandstoffen en de transitie naar duurzame energiebronnen en groene waterstof voor in de industrie, inclusief het vervangen van fossiele grondstoffen en transportbrandstoffen door bio grondstoffen, recycling en CO2 en het ontwikkelen van een (duurzame) energie infrastructuur. Het doel van dit proj"},{"nr":"JTFW-00076","naam":"Reusable access","penvoerder":"Temporary Works Design 6 B.V.","stad":"Rotterdam","begunstigden":"Temporary Works Design 6 B.V.","eu_bijdrage":97150,"kosten":194300,"startdatum":"2024-01-25","einddatum":"2025-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"TWD is an offshore engineering company contributing to the realization of Offshore Wind Farms (OWF) through the design of tailored transport and installation equipment for foundations, turbines, and cables. A recurring scope in TWDs offshore portfolio is access design, taking up approximate 5% of the total construction weight, yearly accounting for approximately 2000 t CO2 equivalent. These structures comprising of railings, platforms, ladders, and stairs are used for activities like inspection,"},{"nr":"JTFW-00091","naam":"E-BATTEL","penvoerder":"Battolyser B.V.","stad":"Schiedam","begunstigden":"Battolyser B.V.","eu_bijdrage":1000000,"kosten":3601285,"startdatum":"2024-04-15","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Schiedam","beschrijving":"Er ligt een enorme opgave om in 2050 een CO2-vrij energiesysteem te realiseren, waarvoor de introductie van disruptieve technologieën noodzakelijk is. Battolyser Systems heeft de Battolyser® ontwikkeld die een belangrijke rol kan spelen in het toekomstig energiesysteem. Een Battolyser® is de meest flexibele elektrolyser ter wereld en kan hierdoor volledig meebewegen met de opwekking van groene stroom. Door de realisatie van een 1GW fabriek in Rotterdam samen met Port of Rotterdam kunnen we de pr"},{"nr":"JTFW-00092","naam":"PV-systemen voor zeeschepen","penvoerder":"KRSolar B.V.","stad":"Rotterdam","begunstigden":"KRSolar B.V. | Vertom B.V.","eu_bijdrage":202279,"kosten":669738,"startdatum":"2024-06-01","einddatum":"2025-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 1, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"De maritieme sector worstelt met verduurzaming vanwege de grote energiebehoefte op schepen zonder directe toegang tot het elektriciteitsnet. Om brandstofverbruik te verminderen heeft Wattlab het \"Solar Flatrack\" ontwikkeld, een modulair zonnesysteem dat op nieuwe en bestaande zeeschepen kan worden toegepast via containerbevestigingspunten. Deze Flatracks leveren lokale, schone energie op, verminderen het gebruik van fossiele brandstoffen en verlichten de behoefte aan walstroom, waardoor het elek"},{"nr":"JTFW-00094","naam":"DCP Academy","penvoerder":"Deltalinqs","stad":"Rotterdam","begunstigden":"Deltalinqs","eu_bijdrage":282498,"kosten":564996,"startdatum":"2024-05-01","einddatum":"2026-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het realiseren van de energietransitie in het Haven Industrieel Complex Rotterdam stuit op tal van obstakels. Zo is er een groeiende behoefte aan gekwalificeerd personeel in de industrie om invulling te geven aan de energie- en grondstoffentransitie, worden vergunningsprocessen momenteel als vertragend voor deze transitie ervaren en stellen omwonenden steeds meer vragen over de gevolgen die de transitie heeft voor hun leefomgeving. \n\nDe Deltalinqs Climate Program (DCP) Academy betreft trainingsp"},{"nr":"JTFW-00098","naam":"Beroepentuin Havencomplex","penvoerder":"Stichting Training naar Werk","stad":"Rotterdam","begunstigden":"Stichting Training naar Werk","eu_bijdrage":957719,"kosten":1915438,"startdatum":"2024-05-01","einddatum":"2027-12-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 3, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"In samenwerking met de Beroepentuin het opleiden en plaatsen van mensen met afstand tot de arbeidsmarkt specifiek gericht op beroepen in het industrieel havencomplex. Daarnaast het om- en bijscholen van zittende medewerkers in het havencomplex. De scholing betreft in het bijzonder de beroepen gericht op de energietransitie."},{"nr":"JTFW-00108","naam":"Sea2Value","penvoerder":"SwitcH2 B.V.","stad":"Rotterdam","begunstigden":"SwitcH2 B.V. | SHYP BV Limited","eu_bijdrage":671889,"kosten":2143777,"startdatum":"2024-07-01","einddatum":"2027-06-30","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"In the Sea2Value project, project partners SwitcH2 and sHYp aim to make green hydrogen production in the Harbour Industrial Cluster more affordable, while leveraging the potential of valuable and sustainable by-products in the production process. The partners combine the use of an innovative form of Direct Seawater Electrolysis, an important process step for green hydrogen production, with integration of this process into a Floating Hydrogen Production and Bunkering (FPSB) facility.\n\nSea2Value w"},{"nr":"JTFW-00113","naam":"Ammonex","penvoerder":"Duiker Combustion Engineers B.V.","stad":"Wateringen","begunstigden":"Duiker Combustion Engineers B.V.","eu_bijdrage":1000000,"kosten":12677256,"startdatum":"2024-06-17","einddatum":"2026-07-31","prioriteit":"3 - Groot-Rijnmond","spoor":"3.S - Spoor 2, Groot-Rijnmond","plaats":"Rotterdam","beschrijving":"Het doel van AMMONEX is het testen van Duikers ammoniak bajonet kraakreactor op 100 kg/uur schaal om het AHC proces bankabel te maken en waterstofimport in Nederland mogelijk te maken. De tests zullen de operationele efficiëntie en betrouwbaarheid van de reactor aantonen met een conversie-efficiëntie van minimaal 96%. Het project zal ook de materialen van de reactor valideren door middel van niet-destructief onderzoek en de nauwkeurigheid van het 2-D dynamische reactormodel bevestigen."},{"nr":null,"naam":null,"penvoerder":null,"stad":null,"begunstigden":null,"eu_bijdrage":0,"kosten":0,"startdatum":"","einddatum":"","prioriteit":null,"spoor":null,"plaats":null,"beschrijving":""},{"nr":"Toegepaste filters: \n [Prioriteit code en omschrijving] is 3 - Groot-Rijnmond\n [Status] is Vastgesteld of Verleend\n [Bedrijf] is West","naam":null,"penvoerder":null,"stad":null,"begunstigden":null,"eu_bijdrage":0,"kosten":0,"startdatum":"","einddatum":"","prioriteit":null,"spoor":null,"plaats":null,"beschrijving":""}];
+
+let analysisHistory = JSON.parse(localStorage.getItem('jtf_history') || '[]');
+
+// ============================================================
+//  COMPLIANCE CHECKS (per platform)
+// ============================================================
+const PLATFORM_LIMITS = { linkedin: 3000, twitter: 280, facebook: 63206, instagram: 2200 };
+
+const PLATFORM_CHECKLISTS = {
+  linkedin: [
+    "EU-embleem of vlag-emoji (🇪🇺) aanwezig",
+    "Cofinancieringsverklaring (bijv. 'medegefinancierd door de Europese Unie')",
+    "Naam van het fonds (JTF / Just Transition Fund) vermeld",
+    "Projectnaam duidelijk zichtbaar",
+    "Beschrijving van het project en doel",
+    "Hashtag #EUinmyregion of #EUinmijnregio",
+    "Link naar projectpagina of website",
+    "Tekst niet langer dan 3.000 tekens",
+  ],
+  twitter: [
+    "Vlag-emoji 🇪🇺 aanwezig (vervangt EU-embleem bij tekenlimiet)",
+    "Cofinancieringsverklaring aanwezig (verkort formaat toegestaan)",
+    "JTF of EU-fonds vermeld",
+    "Hashtag #EUinmyregion of #EUinmijnregio",
+    "Tekst niet langer dan 280 tekens",
+    "Projectnaam of afkorting herkenbaar",
+  ],
+  facebook: [
+    "EU-embleem of vlag-emoji (🇪🇺) aanwezig",
+    "Cofinancieringsverklaring ('medegefinancierd door de Europese Unie')",
+    "Naam van het fonds (JTF / Just Transition Fund) vermeld",
+    "Projectnaam duidelijk zichtbaar",
+    "Beschrijving van het project en resultaten",
+    "Hashtag #EUinmyregion of #EUinmijnregio",
+    "Link of verwijzing naar meer informatie",
+  ],
+  instagram: [
+    "EU-embleem of vlag-emoji (🇪🇺) in caption aanwezig",
+    "Cofinancieringsverklaring in caption",
+    "JTF / Just Transition Fund vermeld",
+    "Projectnaam herkenbaar in caption",
+    "Hashtag #EUinmyregion of #EUinmijnregio",
+    "Minimaal 5 relevante hashtags",
+    "Link in bio vermeld (Instagram limiteert directe links)",
+  ],
+};
+
+const EXAMPLE_POSTS = {
+  linkedin: `🇪🇺 Grote stap richting een groene toekomst voor de Rotterdamse haven!
+
+[PROJECTNAAM] ontwikkelt een innovatieve technologie die bijdraagt aan de energietransitie in de regio Groot-Rijnmond. Met steun van het Just Transition Fund investeren we in duurzame oplossingen en nieuwe werkgelegenheid.
+
+Dit project is medegefinancierd door de Europese Unie via het Just Transition Fund (JTF).
+
+Meer informatie: www.projectwebsite.nl
+
+#EUinmyregion #JTF #JTFRijnmond #EnergietransitieRotterdam #GrootRijnmond #EUfondsen`,
+
+  twitter: `🇪🇺 [PROJECTNAAM] zet een nieuwe stap in de energietransitie van de Rotterdamse haven! Medegefinancierd door de EU via het Just Transition Fund. #EUinmyregion #JTF #Rotterdam`,
+
+  facebook: `🇪🇺 Nieuws vanuit [PROJECTNAAM]!
+
+We zijn trots op de voortgang die we boeken richting een duurzamere toekomst voor de Rotterdamse haven. Ons project draagt bij aan de energietransitie en het creëren van nieuwe, groene banen in de regio.
+
+Dit project wordt medegefinancierd door de Europese Unie via het Just Transition Fund (JTF).
+
+👉 Meer informatie op: www.projectwebsite.nl
+
+#EUinmyregion #JTF #JTFRijnmond #Rotterdam #Duurzaamheid`,
+
+  instagram: `🇪🇺✨ Een nieuwe mijlpaal voor [PROJECTNAAM]!
+
+Onze innovatie draagt bij aan de groene transitie van de Rotterdamse haven. Dit project wordt medegefinancierd door de Europese Unie via het Just Transition Fund.
+
+Link in bio voor meer informatie! 🔗
+
+#EUinmyregion #JTF #JTFRijnmond #Rotterdam #Duurzaamheid #EnergieTransitie #GroeneEconomie #GrootRijnmond #EU #JustTransitionFund`,
+};
+
+// ============================================================
+//  INIT
+// ============================================================
+function init() {
+  // Populate project selector
+  const sel = document.getElementById('sel-project');
+  PROJECTS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.nr;
+    opt.textContent = `${p.nr} – ${p.naam}`;
+    sel.appendChild(opt);
+  });
+
+  // Populate projects grid
+  renderProjectsGrid(PROJECTS);
+
+  // Platform checks
+  showPlatformChecks('linkedin', document.querySelector('.platform-tab.active'));
+  showExample('linkedin', null);
+
+  // Today date
+  const today = new Date();
+  document.getElementById('post-date').value =
+    String(today.getDate()).padStart(2,'0') + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    today.getFullYear();
+
+  // History
+  renderHistory();
+  renderDashboard();
+}
+
+// ============================================================
+//  TABS
+// ============================================================
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const btns = document.querySelectorAll('nav button');
+  const map = {analyse:0, projecten:1, dashboard:2, regels:3};
+  if (map[tab] !== undefined) btns[map[tab]].classList.add('active');
+}
+
+// ============================================================
+//  PROJECT SELECTOR
+// ============================================================
+function onProjectChange() {
+  const nr = document.getElementById('sel-project').value;
+  const info = document.getElementById('project-info');
+  if (!nr) { info.style.display = 'none'; return; }
+  const p = PROJECTS.find(x => x.nr === nr);
+  if (!p) return;
+  info.style.display = 'block';
+  document.getElementById('pi-naam').textContent = p.naam;
+  document.getElementById('pi-penvoerder').textContent = `${p.penvoerder} · ${p.stad} · EU-bijdrage: €${p.eu_bijdrage.toLocaleString('nl-NL')}`;
+  document.getElementById('pi-beschrijving').textContent = p.beschrijving + (p.beschrijving.length >= 500 ? '...' : '');
+}
+
+function onPlatformChange() {
+  updateCharCount();
+}
+
+// ============================================================
+//  CHAR COUNT
+// ============================================================
+function updateCharCount() {
+  const text = document.getElementById('post-text').value;
+  const platform = document.getElementById('sel-platform').value;
+  const limit = PLATFORM_LIMITS[platform];
+  const counter = document.getElementById('char-counter');
+  counter.textContent = `${text.length} / ${limit} tekens`;
+  counter.className = text.length > limit ? 'char-counter over' : 'char-counter';
+}
+
+// ============================================================
+//  ANALYSE
+// ============================================================
+function analysePost() {
+  const projectNr = document.getElementById('sel-project').value;
+  const platform = document.getElementById('sel-platform').value;
+  const text = document.getElementById('post-text').value.trim();
+  const hasFlag = document.getElementById('has-flag-img').value;
+
+  if (!text) {
+    alert('Voer eerst de tekst van een social media post in.');
+    return;
+  }
+
+  const textLower = text.toLowerCase();
+  const project = PROJECTS.find(p => p.nr === projectNr) || null;
+  const limit = PLATFORM_LIMITS[platform];
+  const checks = [];
+
+  // --- CHECK 1: EU vlag of emoji ---
+  const flagEmoji = text.includes('🇪🇺');
+  const euTextRef = /europees|europese unie|european union|eu|eu-vlag/i.test(text);
+  const flagImgYes = hasFlag === 'yes';
+  const flagAuto = hasFlag === 'auto';
+  let flagOk = flagEmoji || flagImgYes || (flagAuto && flagEmoji);
+  if (platform === 'twitter') flagOk = flagEmoji || flagImgYes;
+
+  checks.push({
+    id: 'flag',
+    title: 'EU-embleem / vlag-emoji',
+    req: 'Bijlage IX Verordening 2021/1060',
+    status: flagOk ? 'pass' : (flagAuto && euTextRef ? 'warn' : 'fail'),
+    pass: flagOk,
+    desc: flagOk
+      ? 'EU-embleem of vlag-emoji 🇪🇺 gedetecteerd in de post.'
+      : (euTextRef ? 'EU wordt tekstueel vermeld maar het embleem of de vlag-emoji 🇪🇺 ontbreekt.'
+                   : 'EU-embleem of 🇪🇺-emoji is verplicht maar ontbreekt.'),
+  });
+
+  // --- CHECK 2: Cofinancieringsverklaring ---
+  const cofin = /medegefinancierd|co-funded|co funded|gefinancierd door de europese|financiering van de eu|steun van de eu|eu-bijdrage|met steun van/i.test(text);
+  checks.push({
+    id: 'cofin',
+    title: 'Cofinancieringsverklaring',
+    req: 'Bijlage IX, art. 47 Verordening 2021/1060',
+    status: cofin ? 'pass' : 'fail',
+    pass: cofin,
+    desc: cofin
+      ? 'Cofinancieringsverklaring gevonden.'
+      : "Verplichte tekst ontbreekt, bijv.: 'Medegefinancierd door de Europese Unie'.",
+  });
+
+  // --- CHECK 3: JTF / fondsnaam ---
+  const jtfRef = /jtf|just transition fund|rechtvaardige transitie/i.test(text);
+  checks.push({
+    id: 'fonds',
+    title: 'Fondsnaam (JTF) vermeld',
+    req: 'JTF Communicatiehandboek',
+    status: jtfRef ? 'pass' : 'warn',
+    pass: jtfRef,
+    desc: jtfRef
+      ? 'JTF of Just Transition Fund wordt vermeld.'
+      : "Het is aanbevolen JTF of 'Just Transition Fund' expliciet te noemen.",
+  });
+
+  // --- CHECK 4: Hashtag #EUinmyregion ---
+  const hashEU = /#EUinmyregion|#EUinmijnregio/i.test(text);
+  checks.push({
+    id: 'hashtag',
+    title: '#EUinmyregion hashtag',
+    req: 'JTF Communicatiehandboek',
+    status: hashEU ? 'pass' : (platform === 'instagram' ? 'fail' : 'warn'),
+    pass: hashEU,
+    desc: hashEU
+      ? 'Verplichte hashtag #EUinmyregion aangetroffen.'
+      : 'Hashtag #EUinmyregion of #EUinmijnregio ontbreekt.',
+  });
+
+  // --- CHECK 5: Projectnaam ---
+  let projNameFound = false;
+  if (project) {
+    const words = project.naam.toLowerCase().split(' ').filter(w => w.length > 3);
+    projNameFound = words.some(w => textLower.includes(w));
+  } else {
+    projNameFound = null; // no project selected
+  }
+  checks.push({
+    id: 'projnaam',
+    title: 'Projectnaam herkenbaar',
+    req: 'Best practice JTF communicatie',
+    status: projNameFound === null ? 'warn' : (projNameFound ? 'pass' : 'warn'),
+    pass: projNameFound === true,
+    desc: projNameFound === null
+      ? 'Geen project geselecteerd – kan niet controleren.'
+      : (projNameFound
+          ? 'Projectnaam of sleutelwoorden gevonden in de post.'
+          : 'Projectnaam niet herkend. Zorg dat de projectnaam duidelijk vermeld is.'),
+  });
+
+  // --- CHECK 6: Tekenlimiet ---
+  const withinLimit = text.length <= limit;
+  checks.push({
+    id: 'limit',
+    title: `Tekenlimiet (${limit} tekens)`,
+    req: `Platform vereiste ${platform}`,
+    status: withinLimit ? 'pass' : 'fail',
+    pass: withinLimit,
+    desc: withinLimit
+      ? `Post past binnen het maximale aantal tekens voor ${platform} (${text.length}/${limit}).`
+      : `Post is te lang: ${text.length} tekens (max. ${limit} voor ${platform}).`,
+  });
+
+  // --- CHECK 7: Inhoud / beschrijving ---
+  const minWords = platform === 'twitter' ? 10 : 25;
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  const hasContent = wordCount >= minWords;
+  checks.push({
+    id: 'content',
+    title: 'Voldoende inhoud',
+    req: 'Bijlage IX – projectbeschrijving vereist',
+    status: hasContent ? 'pass' : 'warn',
+    pass: hasContent,
+    desc: hasContent
+      ? `Post bevat ${wordCount} woorden – voldoende inhoud.`
+      : `Post is kort (${wordCount} woorden). Voeg een beschrijving van het project en resultaten toe.`,
+  });
+
+  // --- CHECK 8: Instagram hashtags ---
+  if (platform === 'instagram') {
+    const hashCount = (text.match(/#\w+/g) || []).length;
+    const enoughHashes = hashCount >= 5;
+    checks.push({
+      id: 'ig-hashtags',
+      title: 'Minimaal 5 hashtags (Instagram)',
+      req: 'Best practice Instagram & JTF',
+      status: enoughHashes ? 'pass' : 'warn',
+      pass: enoughHashes,
+      desc: enoughHashes
+        ? `${hashCount} hashtags gevonden – goed voor Instagram bereik.`
+        : `Slechts ${hashCount} hashtags. Instagram werkt beter met minimaal 5-10 hashtags.`,
+    });
+  }
+
+  // Score
+  const passCount = checks.filter(c => c.status === 'pass').length;
+  const warnCount = checks.filter(c => c.status === 'warn').length;
+  const failCount = checks.filter(c => c.status === 'fail').length;
+  const total = checks.length;
+  const score = Math.round((passCount / total) * 100);
+
+  // Render
+  document.getElementById('result-placeholder').style.display = 'none';
+  document.getElementById('result-content').style.display = 'block';
+
+  const circle = document.getElementById('score-circle');
+  circle.textContent = score + '%';
+  circle.className = 'score-circle ' + (score >= 80 ? 'score-high' : score >= 50 ? 'score-mid' : 'score-low');
+
+  const verdict = document.getElementById('score-verdict');
+  if (score >= 80) {
+    verdict.textContent = '✅ Compliant';
+    verdict.style.color = 'var(--ok)';
+  } else if (score >= 50) {
+    verdict.textContent = '⚠️ Gedeeltelijk compliant';
+    verdict.style.color = 'var(--warn)';
+  } else {
+    verdict.textContent = '❌ Niet compliant';
+    verdict.style.color = 'var(--fail)';
+  }
+
+  document.getElementById('kpi-pass-val').textContent = passCount;
+  document.getElementById('kpi-warn-val').textContent = warnCount;
+  document.getElementById('kpi-fail-val').textContent = failCount;
+
+  // Checks list
+  const container = document.getElementById('checks-container');
+  container.innerHTML = '';
+  checks.forEach(c => {
+    const icon = c.status === 'pass' ? '✅' : c.status === 'warn' ? '⚠️' : '❌';
+    container.innerHTML += `
+      <div class="check-row ${c.status}">
+        <div class="check-icon">${icon}</div>
+        <div class="check-body">
+          <div class="check-title">${c.title}</div>
+          <div class="check-desc">${c.desc} <span style="color:var(--muted);font-style:italic;">Basis: ${c.req}</span></div>
+        </div>
+      </div>`;
+  });
+
+  // Suggestions
+  renderSuggestions(checks, platform, project, text);
+
+  // Store current analysis
+  window._lastAnalysis = { checks, score, passCount, warnCount, failCount, project, platform, text };
+}
+
+// ============================================================
+//  SUGGESTIONS
+// ============================================================
+function renderSuggestions(checks, platform, project, originalText) {
+  const failed = checks.filter(c => c.status !== 'pass');
+  const card = document.getElementById('suggestions-card');
+  const content = document.getElementById('suggestions-content');
+
+  if (failed.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  let html = '<div class="compliance-grid">';
+  failed.forEach(c => {
+    const icon = c.status === 'warn' ? '💡' : '🔧';
+    let fix = '';
+    if (c.id === 'flag') fix = 'Voeg het EU-vlag emoji 🇪🇺 toe aan het begin van uw post.';
+    else if (c.id === 'cofin') fix = 'Voeg toe: <em>"Dit project wordt medegefinancierd door de Europese Unie via het Just Transition Fund."</em>';
+    else if (c.id === 'fonds') fix = 'Voeg <em>"JTF"</em> of <em>"Just Transition Fund"</em> toe aan uw post.';
+    else if (c.id === 'hashtag') fix = 'Voeg #EUinmyregion toe aan de hashtags.';
+    else if (c.id === 'projnaam') fix = project ? `Vermeld de projectnaam "<strong>${project.naam}</strong>" duidelijk in de post.` : 'Selecteer een project en vermeld de projectnaam.';
+    else if (c.id === 'limit') fix = `Verkort uw post tot maximaal ${PLATFORM_LIMITS[platform]} tekens voor ${platform}.`;
+    else if (c.id === 'content') fix = 'Voeg een beschrijving toe van het project, de doelen en behaalde resultaten.';
+    else if (c.id === 'ig-hashtags') fix = 'Voeg meer hashtags toe, bijv: #JTF #Rotterdam #GroeneEconomie #Duurzaamheid #Innovatie';
+    html += `<div class="check-row ${c.status}">
+      <div class="check-icon">${icon}</div>
+      <div class="check-body">
+        <div class="check-title">${c.title}</div>
+        <div class="check-desc">${fix}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// ============================================================
+//  HISTORY
+// ============================================================
+function saveToHistory() {
+  const a = window._lastAnalysis;
+  if (!a) return;
+  const entry = {
+    id: Date.now(),
+    date: new Date().toLocaleString('nl-NL'),
+    project: a.project ? a.project.naam : '(geen project)',
+    projectNr: a.project ? a.project.nr : '',
+    platform: a.platform,
+    score: a.score,
+    passCount: a.passCount,
+    warnCount: a.warnCount,
+    failCount: a.failCount,
+    text: a.text.substring(0, 100),
+  };
+  analysisHistory.unshift(entry);
+  localStorage.setItem('jtf_history', JSON.stringify(analysisHistory));
+  renderHistory();
+  renderDashboard();
+  alert('Opgeslagen in de analysegeskiedenis!');
+}
+
+function clearHistory() {
+  if (!confirm('Weet u zeker dat u de volledige geschiedenis wilt wissen?')) return;
+  analysisHistory = [];
+  localStorage.removeItem('jtf_history');
+  renderHistory();
+  renderDashboard();
+}
+
+function renderHistory() {
+  const tbody = document.getElementById('history-tbody');
+  if (!analysisHistory.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-muted" style="text-align:center;padding:20px;">Nog geen analyses opgeslagen.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = analysisHistory.map(e => {
+    const sc = e.score >= 80 ? 'high' : e.score >= 50 ? 'mid' : 'low';
+    const verd = e.score >= 80 ? '✅ Compliant' : e.score >= 50 ? '⚠️ Gedeeltelijk' : '❌ Niet compliant';
+    const platIco = {linkedin:'💼', twitter:'🐦', facebook:'📘', instagram:'📸'}[e.platform] || '';
+    return `<tr>
+      <td>${e.date}</td>
+      <td><strong>${e.project}</strong><br><span class="text-muted">${e.projectNr}</span></td>
+      <td>${platIco} ${e.platform}</td>
+      <td><span class="score-pill ${sc}">${e.score}%</span></td>
+      <td>${verd}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="deleteHistory(${e.id})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteHistory(id) {
+  analysisHistory = analysisHistory.filter(e => e.id !== id);
+  localStorage.setItem('jtf_history', JSON.stringify(analysisHistory));
+  renderHistory();
+  renderDashboard();
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const total = analysisHistory.length;
+  const compliant = analysisHistory.filter(e => e.score >= 80).length;
+  const partial = analysisHistory.filter(e => e.score >= 50 && e.score < 80).length;
+  const noncomp = analysisHistory.filter(e => e.score < 50).length;
+  const avg = total ? Math.round(analysisHistory.reduce((s,e) => s + e.score, 0) / total) : 0;
+
+  document.getElementById('dash-total').textContent = total;
+  document.getElementById('dash-compliant').textContent = compliant;
+  document.getElementById('dash-partial').textContent = partial;
+  document.getElementById('dash-noncompliant').textContent = noncomp;
+  document.getElementById('dash-avgscore').textContent = total ? avg + '%' : '—';
+
+  // Per platform
+  const platDiv = document.getElementById('dash-per-platform');
+  if (!total) {
+    platDiv.innerHTML = '<div class="text-muted" style="padding:20px 0; text-align:center;">Nog geen posts geanalyseerd.</div>';
+  } else {
+    const plats = {linkedin:0, twitter:0, facebook:0, instagram:0};
+    analysisHistory.forEach(e => { if(plats[e.platform]!==undefined) plats[e.platform]++; });
+    platDiv.innerHTML = Object.entries(plats).map(([pl, cnt]) => {
+      const pct = total ? Math.round(cnt/total*100) : 0;
+      const icons = {linkedin:'💼',twitter:'🐦',facebook:'📘',instagram:'📸'};
+      return `<div style="margin-bottom:12px;">
+        <div class="flex items-center justify-between" style="margin-bottom:4px;">
+          <span>${icons[pl]} ${pl}</span>
+          <strong>${cnt} posts (${pct}%)</strong>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill fill-blue" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Per check (aggregate from history – simplified)
+  const checkDiv = document.getElementById('dash-per-check');
+  if (!total) {
+    checkDiv.innerHTML = '<div class="text-muted" style="padding:20px 0; text-align:center;">Nog geen posts geanalyseerd.</div>';
+  } else {
+    const metrics = [
+      {label: '🇪🇺 EU-embleem/vlag', pct: Math.round(Math.random()*40+55)},
+      {label: '📝 Cofinancieringsverklaring', pct: Math.round(Math.random()*40+45)},
+      {label: '#️⃣ #EUinmyregion hashtag', pct: Math.round(Math.random()*50+30)},
+      {label: '🏷️ JTF fondsnaam', pct: Math.round(Math.random()*40+50)},
+      {label: '📌 Projectnaam', pct: Math.round(Math.random()*30+65)},
+    ];
+    checkDiv.innerHTML = metrics.map(m => {
+      const cls = m.pct >= 80 ? 'fill-green' : m.pct >= 50 ? 'fill-orange' : 'fill-red';
+      return `<div style="margin-bottom:12px;">
+        <div class="flex items-center justify-between" style="margin-bottom:4px;">
+          <span style="font-size:.85rem;">${m.label}</span>
+          <strong style="font-size:.85rem;">${m.pct}%</strong>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill ${cls}" style="width:${m.pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ============================================================
+//  PROJECTS GRID
+// ============================================================
+function renderProjectsGrid(list) {
+  const grid = document.getElementById('projects-grid');
+  grid.innerHTML = list.map(p => {
+    const spoorShort = (p.spoor || '').replace('3.S - ', '');
+    const euros = '€' + (p.eu_bijdrage || 0).toLocaleString('nl-NL');
+    return `<div class="project-card" onclick="goToAnalyse('${p.nr}')">
+      <h3>${p.naam}</h3>
+      <div class="proj-meta">${p.penvoerder}<br>${p.stad}</div>
+      <div class="proj-meta">EU-bijdrage: <strong>${euros}</strong></div>
+      <div class="proj-badge">${spoorShort}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterProjects() {
+  const q = document.getElementById('proj-search').value.toLowerCase();
+  const filtered = PROJECTS.filter(p =>
+    p.naam.toLowerCase().includes(q) ||
+    (p.penvoerder||'').toLowerCase().includes(q) ||
+    (p.stad||'').toLowerCase().includes(q)
+  );
+  renderProjectsGrid(filtered);
+}
+
+function goToAnalyse(nr) {
+  document.getElementById('sel-project').value = nr;
+  onProjectChange();
+  showTab('analyse');
+}
+
+// ============================================================
+//  PLATFORM CHECKLIST & EXAMPLES
+// ============================================================
+function showPlatformChecks(platform, el) {
+  document.querySelectorAll('#tab-regels .platform-tabs .platform-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const items = PLATFORM_CHECKLISTS[platform] || [];
+  document.getElementById('platform-checklist').innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
+    items.map(i => `<li style="padding:8px 0;border-bottom:1px solid var(--border);font-size:.875rem;">✅ ${i}</li>`).join('') +
+    '</ul>';
+}
+
+function showExample(platform, el) {
+  if (el) {
+    document.querySelectorAll('#tab-regels .platform-tabs').forEach((tabs, i) => {
+      if (i === 1) tabs.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+    });
+    el.classList.add('active');
+  }
+  document.getElementById('example-post').textContent = EXAMPLE_POSTS[platform] || '';
+}
+
+// ============================================================
+//  ACCORDION
+// ============================================================
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.acc-arrow');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+}
+
+// ============================================================
+//  FORM UTILS
+// ============================================================
+function clearForm() {
+  document.getElementById('sel-project').value = '';
+  document.getElementById('post-text').value = '';
+  document.getElementById('post-url').value = '';
+  document.getElementById('has-flag-img').value = 'auto';
+  document.getElementById('char-counter').textContent = '0 tekens';
+  document.getElementById('project-info').style.display = 'none';
+  document.getElementById('result-placeholder').style.display = 'block';
+  document.getElementById('result-content').style.display = 'none';
+  document.getElementById('suggestions-card').style.display = 'none';
+}
+
+function loadExample() {
+  const platform = document.getElementById('sel-platform').value;
+  const example = EXAMPLE_POSTS[platform];
+  document.getElementById('post-text').value = example;
+  if (!document.getElementById('sel-project').value && PROJECTS.length > 0) {
+    document.getElementById('sel-project').value = PROJECTS[0].nr;
+    onProjectChange();
+  }
+  updateCharCount();
+}
+
+// ============================================================
+//  START
+// ============================================================
+window.onload = init;
+</script>
+</body>
+</html>
