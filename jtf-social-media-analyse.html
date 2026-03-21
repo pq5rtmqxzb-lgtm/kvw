@@ -811,6 +811,7 @@ function showTab(tab) {
   const btns = document.querySelectorAll('nav button');
   const map = {analyse:0, projecten:1, dashboard:2, regels:3, live:4};
   if (map[tab] !== undefined) btns[map[tab]].classList.add('active');
+  if (tab === 'live') initLiveTab();
 }
 
 // ============================================================
@@ -1445,12 +1446,7 @@ function showDetail(nr) {
   detail.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-// Override showTab to init live tab on first open
-const _origShowTab = showTab;
-function showTab(tab) {
-  _origShowTab(tab);
-  if (tab === 'live') initLiveTab();
-}
+// initLiveTab is called from showTab above when tab === 'live'
 
 </script>
 </body>
