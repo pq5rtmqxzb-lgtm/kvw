@@ -1048,6 +1048,7 @@ function clearHistory() {
 
 function renderHistory() {
   const tbody = document.getElementById('history-tbody');
+  if (!tbody) return;
   if (!analysisHistory.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-muted" style="text-align:center;padding:20px;">Nog geen analyses opgeslagen.</td></tr>';
     return;
